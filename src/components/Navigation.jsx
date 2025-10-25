@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 export default function Navigation() {
   const [open, setOpen] = useState(false);
@@ -12,11 +13,11 @@ export default function Navigation() {
         ☰
       </button>
       <ul className={open ? 'active' : ''}>
-        <li><a href="#home">Home</a></li>
-        <li><a href="#contact">Contact Us</a></li>
-        <li><a href="#journal">Journal</a></li>
-        <li><a href="#resources">Resources</a></li>
-        <li><a href="#doodle">Doodle</a></li>
+        <li><Link to="/">Home</Link></li>
+        <li><Link to="/contact">Contact Us</Link></li>
+        <li><Link to="/journal">Journal</Link></li>
+        <li><Link to="/resources">Resources</Link></li>
+        <li><Link to="/doodle">Doodle</Link></li>
       </ul>
     </nav>
   );

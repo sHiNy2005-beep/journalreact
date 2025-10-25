@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import background from '../images/home-background.jpg';
 
 export default function Home() {
@@ -8,7 +9,7 @@ export default function Home() {
 			<div className="home-content">
 				<h1>Welcome to Heart♥Log</h1>
 				<p>Your personal space for journaling, resources, and creativity</p>
-				<a href="#journal" className="btn-home">Start Exploring</a>
+				<Link to="/journal" className="btn-home">Start Exploring</Link>
 			</div>
 		</section>
 	);

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import Navigation from './components/Navigation';
 import Home from './pages/Home';
@@ -14,11 +15,13 @@ export default function Layout(){
 			<Header />
 			<Navigation />
 			<main>
-				<Home />
-				<Journal />
-				<Resources />
-				<Doodle />
-				<Contact />
+				<Routes>
+					<Route path="/" element={<Home />} />
+					<Route path="/journal" element={<Journal />} />
+					<Route path="/resources" element={<Resources />} />
+					<Route path="/doodle" element={<Doodle />} />
+					<Route path="/contact" element={<Contact />} />
+				</Routes>
 			</main>
 			<Footer />
 		</>
