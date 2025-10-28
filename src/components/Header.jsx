@@ -1,5 +1,7 @@
 import React from 'react';
 import logo from '../images/heartlog.ai.png';
+import '../styles/header.css';
+import '../styles/header.css';
 
 export default function Header() {
   return (

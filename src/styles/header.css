@@ -1,0 +1,33 @@
+/* Header styles */
+header {
+    background: linear-gradient(90deg, #f3b6d4, #c7a6e2);
+    display: flex;
+    align-items: center;
+    padding: 1rem 2rem;
+    justify-content: space-between;
+    color: #fff;
+    border-bottom: 3px solid #e6c1ea;
+    position: relative;
+}
+
+.logo img {
+    height: 50px;
+    margin-right: 1rem;
+    flex: 0 0 auto;
+}
+
+.Main-title {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+    position: absolute;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    left:50%;
+    top: 1.2rem;
+}
+
+.title-alignment {
+    width: 50px;
+}

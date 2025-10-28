@@ -1,5 +1,7 @@
 import React from 'react';
 import { embeddedJournal } from '../data/entriesData';
+import '../styles/journal.css';
+import '../styles/journal.css';
 
 function formatDate(dstr) {
   if (!dstr) return '';

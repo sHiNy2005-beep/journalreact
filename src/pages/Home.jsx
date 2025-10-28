@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import background from '../images/home-background.jpg';
+import '../styles/home.css';
+import '../styles/home.css';
 
 export default function Home() {
 	return (

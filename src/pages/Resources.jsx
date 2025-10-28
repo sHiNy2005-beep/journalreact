@@ -2,6 +2,8 @@ import React from 'react';
 import better from '../images/betterhelp.png';
 import simple from '../images/simplepractice.png';
 import bright from '../images/brightside.png';
+import '../styles/resources.css';
+import '../styles/resources.css';
 
 export default function Resources(){
   return (
