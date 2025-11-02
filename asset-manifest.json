@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/journalreact/static/css/main.22562922.css",
-    "main.js": "/journalreact/static/js/main.7dcd371d.js",
+    "main.css": "/journalreact/static/css/main.ef0dd142.css",
+    "main.js": "/journalreact/static/js/main.6da0aeae.js",
     "static/media/simplepractice.png": "/journalreact/static/media/simplepractice.292108e5fcb16ed5148e.png",
     "static/media/betterhelp.png": "/journalreact/static/media/betterhelp.b1d867807928809eb0e4.png",
     "static/media/brightside.png": "/journalreact/static/media/brightside.54ba7dbca5ddb01237da.png",
@@ -10,11 +10,11 @@
     "static/media/home-background.jpg": "/journalreact/static/media/home-background.0d27c7e999415cf45017.jpg",
     "static/media/heartlog.ai.png": "/journalreact/static/media/heartlog.ai.4605b8be5821db8b2981.png",
     "index.html": "/journalreact/index.html",
-    "main.22562922.css.map": "/journalreact/static/css/main.22562922.css.map",
-    "main.7dcd371d.js.map": "/journalreact/static/js/main.7dcd371d.js.map"
+    "main.ef0dd142.css.map": "/journalreact/static/css/main.ef0dd142.css.map",
+    "main.6da0aeae.js.map": "/journalreact/static/js/main.6da0aeae.js.map"
   },
   "entrypoints": [
-    "static/css/main.22562922.css",
-    "static/js/main.7dcd371d.js"
+    "static/css/main.ef0dd142.css",
+    "static/js/main.6da0aeae.js"
   ]
 }
