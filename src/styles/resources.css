@@ -15,7 +15,6 @@
     padding: 0 1rem;
 }
 
-/* Each resource box */
 .resource-card {
     display: block;
     background: #fff;
@@ -93,7 +92,6 @@
     gap: 2rem;
 }
 
-/* Section for the Map */
 .map {
     position: relative;
     width: 100%;
@@ -125,3 +123,4 @@
         max-width: 320px;
     }
 }
+
