@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { embeddedJournal } from '../data/entriesData';
 import '../styles/journal.css';
-import '../styles/journal.css';
+import entriesData from "../data/entriesData";
 
 function formatDate(dstr) {
   if (!dstr) return '';
@@ -11,7 +11,27 @@ function formatDate(dstr) {
 }
 
 export default function Journal(){
-  const entries = (embeddedJournal.entries || []).slice().sort((a,b)=> new Date(b.date) - new Date(a.date));
+  const [entriesState, setEntriesState] = useState(
+    (embeddedJournal.entries || []).slice().sort((a,b)=> new Date(b.date) - new Date(a.date))
+  );
+
+  useEffect(() => {
+    fetch("https://server-journal-1.onrender.com/journalEntries")
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        const arr = Array.isArray(data) ? data : (data.entries || []);
+        arr.sort((a,b)=> new Date(b.date) - new Date(a.date));
+        if (arr.length) setEntriesState(arr);
+      })
+      .catch(err => {
+        console.warn("Could not fetch live entries, using embedded data:", err);
+      });
+  }, []);
+
+  const entries = entriesState;
 
   return (
     <section id="journal" className="entries">
@@ -26,7 +46,12 @@ export default function Journal(){
               <span className="mood">{e.mood}</span>
             </div>
             {e.img_name && (
-              <img className="entry-thumb" src={e.img_name.replace(/^json\//i,'/') } alt={e.title} onError={(ev)=>{ev.currentTarget.style.display='none'}} />
+              <img
+                className="entry-thumb"
+                src={e.img_name.replace(/^json\//i,'/')}
+                alt={e.title}
+                onError={(ev)=>{ev.currentTarget.style.display='none'}}
+              />
             )}
           </article>
         ))}
