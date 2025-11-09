@@ -15,8 +15,10 @@ export default function Journal(){
     (embeddedJournal.entries || []).slice().sort((a,b)=> new Date(b.date) - new Date(a.date))
   );
 
+  const API_URL = process.env.REACT_APP_API_URL || "https://server-journal-1.onrender.com";
+
   useEffect(() => {
-    fetch("https://server-journal-1.onrender.com/journalEntries")
+    fetch(`${API_URL}/api/journalEntries`)
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
