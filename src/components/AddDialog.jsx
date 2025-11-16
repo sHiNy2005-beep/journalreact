@@ -1,40 +1,78 @@
 import "../styles/dialog.css";
 import React, { useState } from "react";
 
+function validateEntry(entry) {
+  const errors = {};
+  if (!entry.title || entry.title.trim().length < 1)
+    errors.title = "Title is required.";
+  else if (entry.title.length > 200)
+    errors.title = "Title must be 200 characters or less.";
+  if (!entry.date)
+    errors.date = "Date is required.";
+  else if (isNaN(Date.parse(entry.date)))
+    errors.date = "Invalid date format.";
+  if (!entry.summary || entry.summary.trim().length < 1)
+    errors.summary = "Summary is required.";
+  else if (entry.summary.length > 5000)
+    errors.summary = "Summary must be 5000 characters or less.";
+  if (entry.mood && entry.mood.length > 200)
+    errors.mood = "Mood must be 200 characters or less.";
+  if (entry.img_name && entry.img_name.length > 1000)
+    errors.img_name = "Image name too long.";
+  return errors;
+}
+
 const AddDialog = (props) => {
   const [inputs, setInputs] = useState({});
+  const [errors, setErrors] = useState({});
   const [result, setResult] = useState("");
 
   const handleChange = (event) => {
-    const name = event.target.name;
-    const value = event.target.value;
+    const { name, value } = event.target;
     setInputs((values) => ({ ...values, [name]: value }));
   };
 
   const handleImageChange = (event) => {
-    const name = event.target.name;
-    const value = event.target.files[0];
-    setInputs((values) => ({ ...values, [name]: value }));
+    const file = event.target.files[0];
+    setInputs((values) => ({ ...values, img: file || null }));
   };
 
   const onSubmit = async (event) => {
     event.preventDefault();
-    setResult("Sending....");
+    setResult("");
+    const candidate = {
+      title: inputs.title || "",
+      date: inputs.date || "",
+      summary: inputs.summary || "",
+      mood: inputs.mood || "",
+      img_name: inputs.img ? inputs.img.name : "",
+    };
+    const validationErrors = validateEntry(candidate);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      setResult("Please fix the highlighted errors.");
+      return;
+    }
+    setErrors({});
+    setResult("Sending...");
     const formData = new FormData(event.target);
-
-    const response = await fetch("http://localhost:3002/api/journalEntries", {
-      method: "POST",
-      body: formData,
-    });
-
-    if (response.status === 200 || response.status === 201) {
-      setResult("Entry Successfully Added");
-      event.target.reset();
-      props.addJournalEntry(await response.json());
-      props.closeDialog();
-    } else {
-      console.log("Error adding entry", response);
-      setResult(`Error: ${response.statusText || response.status}`);
+    try {
+      const response = await fetch("http://localhost:3002/api/journalEntries", {
+        method: "POST",
+        body: formData,
+      });
+      if (response.status === 200 || response.status === 201) {
+        setResult(" Entry Successfully Added");
+        event.target.reset();
+        props.addJournalEntry(await response.json());
+        props.closeDialog();
+      } else {
+        console.log("Error adding entry", response);
+        setResult(` Error: ${response.statusText || response.status}`);
+      }
+    } catch (err) {
+      console.error("Network error:", err);
+      setResult(" Network error — could not reach server.");
     }
   };
 
@@ -49,7 +87,12 @@ const AddDialog = (props) => {
           >
             &times;
           </span>
-          <form id="add-entry-form" onSubmit={onSubmit} encType="multipart/form-data">
+          <form
+            id="add-entry-form"
+            onSubmit={onSubmit}
+            encType="multipart/form-data"
+            noValidate
+          >
             <p>
               <label htmlFor="title">Title:</label>
               <input
@@ -60,6 +103,7 @@ const AddDialog = (props) => {
                 onChange={handleChange}
                 required
               />
+              {errors.title && <div className="field-error">{errors.title}</div>}
             </p>
             <p>
               <label htmlFor="date">Date:</label>
@@ -71,6 +115,7 @@ const AddDialog = (props) => {
                 onChange={handleChange}
                 required
               />
+              {errors.date && <div className="field-error">{errors.date}</div>}
             </p>
             <p>
               <label htmlFor="summary">Summary:</label>
@@ -81,6 +126,9 @@ const AddDialog = (props) => {
                 onChange={handleChange}
                 required
               />
+              {errors.summary && (
+                <div className="field-error">{errors.summary}</div>
+              )}
             </p>
             <p>
               <label htmlFor="mood">Mood:</label>
@@ -91,8 +139,8 @@ const AddDialog = (props) => {
                 value={inputs.mood || ""}
                 onChange={handleChange}
               />
+              {errors.mood && <div className="field-error">{errors.mood}</div>}
             </p>
-
             <section className="columns">
               <p id="img-prev-section">
                 <img
@@ -110,9 +158,11 @@ const AddDialog = (props) => {
                   onChange={handleImageChange}
                   accept="image/*"
                 />
+                {errors.img_name && (
+                  <div className="field-error">{errors.img_name}</div>
+                )}
               </p>
             </section>
-
             <p>
               <button type="submit">Submit</button>
             </p>
