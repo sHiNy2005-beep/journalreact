@@ -1,4 +1,3 @@
-// components/AddDialog.jsx
 import "../styles/dialog.css";
 import React, { useState } from "react";
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { embeddedJournal } from '../data/entriesData';
 import '../styles/journal.css';
 import entriesData from "../data/entriesData";
@@ -23,7 +23,7 @@ export default function Journal(){
     img_name: ""
   });
 
-  const API_URL = process.env.REACT_APP_API_URL || "https://server-journal-1.onrender.com";
+  const API_URL = "http://localhost:3002";
 
   useEffect(() => {
     fetch(`${API_URL}/api/journalEntries`)
@@ -43,23 +43,42 @@ export default function Journal(){
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setNewEntry({ ...newEntry, [name]: value });
+    setNewEntry(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const entry = { ...newEntry, _id: Date.now().toString() };
-    setEntriesState(prev => [entry, ...prev]);
+
+    const localTempId = `temp-${Date.now()}`;
+    const optimisticEntry = { ...newEntry, _id: localTempId };
+    setEntriesState(prev => [optimisticEntry, ...prev]);
+
     setNewEntry({ title: "", date: "", summary: "", mood: "", img_name: "" });
     setShowForm(false);
+
     try {
       const res = await fetch(`${API_URL}/api/journalEntries`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(entry),
+        body: JSON.stringify({
+          title: optimisticEntry.title,
+          date: optimisticEntry.date,
+          summary: optimisticEntry.summary,
+          mood: optimisticEntry.mood,
+          img_name: optimisticEntry.img_name || ""
+        }),
       });
+
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const saved = await res.json();
+
+      setEntriesState(prev => {
+        const filtered = prev.filter(e => e._id !== localTempId);
+        return [saved, ...filtered].sort((a,b)=> new Date(b.date) - new Date(a.date));
+      });
+
     } catch (err) {
+      setEntriesState(prev => prev.filter(e => e._id !== localTempId));
       console.warn("Could not save entry to server:", err);
     }
   };
