@@ -90,7 +90,6 @@ const AddDialog = (props) => {
             &times;
           </span>
 
-          {/* keep form id similar to your earlier code but arranged like prof's layout */}
           <form
             id="add-entry-form"
             onSubmit={onSubmit}

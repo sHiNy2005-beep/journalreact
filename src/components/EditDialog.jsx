@@ -8,7 +8,6 @@ export default function EditDialog({
   onSaved,
   apiBase = '',
 }) {
-  // default to env or deployed render
   const base = apiBase || process.env.REACT_APP_API_URL || 'https://server-journal-1.onrender.com';
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
@@ -167,4 +166,3 @@ const dialogStyle = {
   background: '#fff', padding: 16, borderRadius: 8, width: 'min(720px, 94%)', boxShadow: '0 6px 20px rgba(0,0,0,0.2)'
 };
 const errStyle = { color: 'crimson', marginTop: 4, fontSize: '0.9em' };
-//172

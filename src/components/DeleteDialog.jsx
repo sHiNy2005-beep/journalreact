@@ -76,4 +76,3 @@ const overlayStyle = {
 const dialogStyle = {
   background: '#fff', padding: 16, borderRadius: 8, width: 'min(420px, 92%)', boxShadow: '0 6px 24px rgba(0,0,0,0.2)'
 };
-//77
