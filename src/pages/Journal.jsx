@@ -41,7 +41,6 @@ export default function Journal() {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // Use deployed Render backend by default (you can set REACT_APP_API_URL in frontend env instead)
   const API_URL = process.env.REACT_APP_API_URL || 'https://server-journal-1.onrender.com';
 
   const [editOpen, setEditOpen] = useState(false);
@@ -190,35 +189,51 @@ export default function Journal() {
 
       <div className="journal-scroll-wrapper" aria-live="polite">
         {entries.length === 0 && !loading && <div className="info">No entries yet.</div>}
-        {entries.map((e, idx) => (
-          <article className="entry" key={e._id ?? e.id ?? `${e.title}-${idx}`}>
-            <div className="entry-content">
-              <div className="entry-date">{formatDate(e.date)}</div>
-              <h2>{e.title}</h2>
-              <p>{e.summary}</p>
-              <span className="mood">{e.mood}</span>
-              {e.isTemp && <small> (pending)</small>}
-            </div>
+        {entries.map((e, idx) => {
 
-            {e.img_name && (
-              <img
-                className="entry-thumb"
-                src={e.img_name.replace(/^json\//i, '/')}
-                alt={e.title || 'Journal image'}
-                onError={(ev) => { ev.currentTarget.style.display = 'none'; }}
-              />
-            )}
+          // ==========================
+          //   IMAGE SOURCE LOGIC
+          // ==========================
+          let imgSrc = '';
+          if (e.img_name) {
+            let name = e.img_name.replace(/^json\//i, '/');
+            if (name.startsWith('uploads/')) {
+              imgSrc = `${API_URL}/${name}`;
+            } else {
+              imgSrc = name; 
+            }
+          }
 
-            <div className="entry-actions">
-              <button className="edit-btn" onClick={() => openEdit(e)} aria-label={`Edit entry ${e.title}`}>
-                Edit
-              </button>
-              <button className="delete-btn" onClick={() => openDelete(e._id ?? e.id)} aria-label={`Delete entry ${e.title}`}>
-                Delete
-              </button>
-            </div>
-          </article>
-        ))}
+          return (
+            <article className="entry" key={e._id ?? e.id ?? `${e.title}-${idx}`}>
+              <div className="entry-content">
+                <div className="entry-date">{formatDate(e.date)}</div>
+                <h2>{e.title}</h2>
+                <p>{e.summary}</p>
+                <span className="mood">{e.mood}</span>
+                {e.isTemp && <small> (pending)</small>}
+              </div>
+
+              {imgSrc && (
+                <img
+                  className="entry-thumb"
+                  src={imgSrc}
+                  alt={e.title || 'Journal image'}
+                  onError={(ev) => { ev.currentTarget.style.display = 'none'; }}
+                />
+              )}
+
+              <div className="entry-actions">
+                <button className="edit-btn" onClick={() => openEdit(e)} aria-label={`Edit entry ${e.title}`}>
+                  Edit
+                </button>
+                <button className="delete-btn" onClick={() => openDelete(e._id ?? e.id)} aria-label={`Delete entry ${e.title}`}>
+                  Delete
+                </button>
+              </div>
+            </article>
+          );
+        })}
       </div>
 
       <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
