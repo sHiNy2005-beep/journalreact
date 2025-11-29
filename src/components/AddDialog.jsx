@@ -7,10 +7,8 @@ function validateEntry(entry) {
     errors.title = "Title is required.";
   else if (entry.title.length > 200)
     errors.title = "Title must be 200 characters or less.";
-  if (!entry.date)
-    errors.date = "Date is required.";
-  else if (isNaN(Date.parse(entry.date)))
-    errors.date = "Invalid date format.";
+  if (!entry.date) errors.date = "Date is required.";
+  else if (isNaN(Date.parse(entry.date))) errors.date = "Invalid date format.";
   if (!entry.summary || entry.summary.trim().length < 1)
     errors.summary = "Summary is required.";
   else if (entry.summary.length > 5000)
@@ -47,32 +45,36 @@ const AddDialog = (props) => {
       mood: inputs.mood || "",
       img_name: inputs.img ? inputs.img.name : "",
     };
+
     const validationErrors = validateEntry(candidate);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       setResult("Please fix the highlighted errors.");
       return;
     }
+
     setErrors({});
     setResult("Sending...");
     const formData = new FormData(event.target);
+
     try {
-      const response = await fetch("http://localhost:3002/api/journalEntries", {
+      const response = await fetch("https://server-journal-1.onrender.com/api/journalEntries", { // changed link so chnage both front and backend to see if it workks without running it locally 
         method: "POST",
         body: formData,
       });
+
       if (response.status === 200 || response.status === 201) {
-        setResult(" Entry Successfully Added");
+        setResult("Entry Successfully Added");
         event.target.reset();
-        props.addJournalEntry(await response.json());
-        props.closeDialog();
+        props.addJournalEntry && props.addJournalEntry(await response.json());
+        props.closeDialog && props.closeDialog();
       } else {
         console.log("Error adding entry", response);
-        setResult(` Error: ${response.statusText || response.status}`);
+        setResult(`Error: ${response.statusText || response.status}`);
       }
     } catch (err) {
       console.error("Network error:", err);
-      setResult(" Network error — could not reach server.");
+      setResult("Network error — could not reach server.");
     }
   };
 
@@ -87,6 +89,8 @@ const AddDialog = (props) => {
           >
             &times;
           </span>
+
+          {/* keep form id similar to your earlier code but arranged like prof's layout */}
           <form
             id="add-entry-form"
             onSubmit={onSubmit}
@@ -105,6 +109,7 @@ const AddDialog = (props) => {
               />
               {errors.title && <div className="field-error">{errors.title}</div>}
             </p>
+
             <p>
               <label htmlFor="date">Date:</label>
               <input
@@ -117,6 +122,7 @@ const AddDialog = (props) => {
               />
               {errors.date && <div className="field-error">{errors.date}</div>}
             </p>
+
             <p>
               <label htmlFor="summary">Summary:</label>
               <textarea
@@ -130,6 +136,7 @@ const AddDialog = (props) => {
                 <div className="field-error">{errors.summary}</div>
               )}
             </p>
+
             <p>
               <label htmlFor="mood">Mood:</label>
               <input
@@ -141,6 +148,7 @@ const AddDialog = (props) => {
               />
               {errors.mood && <div className="field-error">{errors.mood}</div>}
             </p>
+
             <section className="columns">
               <p id="img-prev-section">
                 <img
@@ -163,6 +171,7 @@ const AddDialog = (props) => {
                 )}
               </p>
             </section>
+
             <p>
               <button type="submit">Submit</button>
             </p>

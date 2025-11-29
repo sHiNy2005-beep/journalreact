@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { embeddedJournal } from '../data/entriesData';
 import '../styles/journal.css';
+import EditDialog from '../components/EditDialog.jsx';
+import DeleteDialog from '../components/DeleteDialog.jsx';
 
 function parseToDate(dstr) {
   if (!dstr) return null;
@@ -37,7 +39,13 @@ export default function Journal() {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3002';
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [editEntry, setEditEntry] = useState(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteEntryId, setDeleteEntryId] = useState(null);
 
   useEffect(() => {
     const ac = new AbortController();
@@ -73,9 +81,32 @@ export default function Journal() {
     }
   };
 
+  function validateNewEntryFields(entry) {
+    const t = entry.title?.trim() ?? '';
+    const d = entry.date ?? '';
+    const s = entry.summary?.trim() ?? '';
+    const m = (entry.mood ?? '').trim();
+    const img = (entry.img_name ?? '').trim();
+
+    if (!t || t.length < 1 || t.length > 200) return 'Title must be 1–200 characters.';
+    if (!d) return 'Date is required.';
+    const dt = new Date(d);
+    if (isNaN(dt.getTime())) return 'Date is invalid.';
+    if (!s || s.length < 1 || s.length > 5000) return 'Summary must be 1–5000 characters.';
+    if (m.length > 200) return 'Mood must be 200 characters or less.';
+    if (img.length > 1000) return 'Image URL must be 1000 characters or less.';
+    return null;
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
+    const vError = validateNewEntryFields(newEntry);
+    if (vError) {
+      setErrorMsg(vError);
+      return;
+    }
+
     setSubmitting(true);
     const localTempId = `temp-${Date.now()}`;
     const optimisticEntry = { ...newEntry, _id: localTempId, isTemp: true };
@@ -94,27 +125,67 @@ export default function Journal() {
           img_name: safeImgValue(optimisticEntry.img_name)
         })
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        const txt = await res.text();
+        let parsed = null;
+        try { parsed = txt ? JSON.parse(txt) : null; } catch { parsed = null; }
+        const message = (parsed && (parsed.message || (parsed.details && parsed.details.map(d=>d.message).join('; ')))) || txt || `HTTP ${res.status}`;
+        throw new Error(message);
+      }
       const saved = await res.json();
       setEntriesState((p) => {
         const filtered = p.filter((it) => it._id !== localTempId);
         return [saved, ...filtered].sort((a, b) => timeValue(b.date) - timeValue(a.date));
       });
-    } catch {
+      setSuccessMsg('Entry added successfully.');
+      setTimeout(() => setSuccessMsg(''), 3000);
+    } catch (err) {
       setEntriesState((p) => p.filter((it) => it._id !== localTempId));
-      setErrorMsg('Could not save entry to server. Please try again.');
+      setErrorMsg(err.message || 'Could not save entry to server. Please try again.');
     } finally {
       setSubmitting(false);
     }
   };
+
+  function openEdit(entry) {
+    setEditEntry(entry);
+    setEditOpen(true);
+  }
+
+  function openDelete(id) {
+    setDeleteEntryId(id);
+    setDeleteOpen(true);
+  }
+
+  function handleEditSaved(updated) {
+    if (!updated) return;
+    const idKey = updated._id ?? updated.id;
+    setEntriesState((prev) => prev.map((it) => ((it._id ?? it.id) === idKey ? updated : it)).sort((a, b) => timeValue(b.date) - timeValue(a.date)));
+    setSuccessMsg('Entry edited successfully.');
+    setTimeout(() => setSuccessMsg(''), 3000);
+  }
+
+  function handleDeleted(id) {
+    if (!id) return;
+    setEntriesState((prev) => prev.filter((it) => (it._id ?? it.id) !== id));
+    if (editEntry && ((editEntry._id ?? editEntry.id) === id)) {
+      setEditOpen(false);
+      setEditEntry(null);
+    }
+    setSuccessMsg('Entry deleted.');
+    setTimeout(() => setSuccessMsg(''), 3000);
+  }
 
   const entries = entriesState;
 
   return (
     <section id="journal" className="entries">
       <h1 className="entries-title">Recent Entries</h1>
+
+      {successMsg && <div className="info" role="status" style={{ marginBottom: 8 }}>{successMsg}</div>}
       {loading && <div className="info">Loading latest entries…</div>}
-      {errorMsg && <div className="error" role="alert">{errorMsg}</div>}
+      {errorMsg && <div className="error" role="alert" style={{ marginBottom: 8 }}>{errorMsg}</div>}
+
       <div className="journal-scroll-wrapper" aria-live="polite">
         {entries.length === 0 && !loading && <div className="info">No entries yet.</div>}
         {entries.map((e) => (
@@ -126,6 +197,7 @@ export default function Journal() {
               <span className="mood">{e.mood}</span>
               {e.isTemp && <small> (pending)</small>}
             </div>
+
             {e.img_name && (
               <img
                 className="entry-thumb"
@@ -134,14 +206,26 @@ export default function Journal() {
                 onError={(ev) => { ev.currentTarget.style.display = 'none'; }}
               />
             )}
+
+          
+            <div className="entry-actions">
+              <button className="edit-btn" onClick={() => openEdit(e)} aria-label={`Edit entry ${e.title}`}>
+                Edit
+              </button>
+              <button className="delete-btn" onClick={() => openDelete(e._id ?? e.id)} aria-label={`Delete entry ${e.title}`}>
+                Delete
+              </button>
+            </div>
           </article>
         ))}
       </div>
+
       <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
         <button className="add-entry-btn" onClick={() => setShowForm((s) => !s)} aria-pressed={showForm} disabled={submitting}>
           {showForm ? 'Cancel' : 'Add New Entry'}
         </button>
       </div>
+
       {showForm && (
         <form className="add-entry-form" onSubmit={handleSubmit} style={{ textAlign: 'center' }}>
           <input type="text" name="title" placeholder="Title" aria-label="Title" value={newEntry.title} onChange={handleChange} required />
@@ -154,6 +238,22 @@ export default function Journal() {
           </div>
         </form>
       )}
+
+      <EditDialog
+        open={editOpen}
+        onClose={() => { setEditOpen(false); setEditEntry(null); }}
+        entry={editEntry}
+        apiBase={API_URL}
+        onSaved={handleEditSaved}
+      />
+
+      <DeleteDialog
+        open={deleteOpen}
+        onClose={() => { setDeleteOpen(false); setDeleteEntryId(null); }}
+        entryId={deleteEntryId}
+        apiBase={API_URL}
+        onDeleted={handleDeleted}
+      />
     </section>
   );
 }

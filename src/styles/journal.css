@@ -239,3 +239,46 @@
     width: 100%;
   }
 }
+.entry-actions button {
+  display: inline-block;
+  margin: 0.2rem 0.3rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+  border: none;
+  box-shadow: 0 4px 10px rgba(106,53,118,0.08);
+}
+
+/* Edit button */
+.entry-actions .edit-btn {
+  background: linear-gradient(90deg, #d5b6f1, #c6a1e3);
+  color: #fff;
+}
+
+.entry-actions .edit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(106,53,118,0.18);
+  opacity: 0.96;
+}
+
+/* Delete button */
+.entry-actions .delete-btn {
+  background: linear-gradient(90deg, #f1b6d3, #e89dc3);
+  color: #fff;
+}
+
+.entry-actions .delete-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(183,40,111,0.18);
+  opacity: 0.96;
+}
+
+@media (max-width: 600px) {
+  .entry-actions button {
+    width: 100%;
+    margin: 0.25rem 0;
+  }
+}
