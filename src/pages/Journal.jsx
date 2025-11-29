@@ -40,7 +40,9 @@ export default function Journal() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3002';
+
+  // Use deployed Render backend by default (you can set REACT_APP_API_URL in frontend env instead)
+  const API_URL = process.env.REACT_APP_API_URL || 'https://server-journal-1.onrender.com';
 
   const [editOpen, setEditOpen] = useState(false);
   const [editEntry, setEditEntry] = useState(null);
@@ -188,8 +190,8 @@ export default function Journal() {
 
       <div className="journal-scroll-wrapper" aria-live="polite">
         {entries.length === 0 && !loading && <div className="info">No entries yet.</div>}
-        {entries.map((e) => (
-          <article className="entry" key={e._id}>
+        {entries.map((e, idx) => (
+          <article className="entry" key={e._id ?? e.id ?? `${e.title}-${idx}`}>
             <div className="entry-content">
               <div className="entry-date">{formatDate(e.date)}</div>
               <h2>{e.title}</h2>
@@ -207,7 +209,6 @@ export default function Journal() {
               />
             )}
 
-          
             <div className="entry-actions">
               <button className="edit-btn" onClick={() => openEdit(e)} aria-label={`Edit entry ${e.title}`}>
                 Edit

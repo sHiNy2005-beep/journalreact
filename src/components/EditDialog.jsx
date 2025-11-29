@@ -4,10 +4,12 @@ export default function EditDialog({
   open,
   onClose,
   entry = {},
-  onEdit,    
-  onSaved,  
+  onEdit,
+  onSaved,
   apiBase = '',
 }) {
+  // default to env or deployed render
+  const base = apiBase || process.env.REACT_APP_API_URL || 'https://server-journal-1.onrender.com';
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
   const [summary, setSummary] = useState('');
@@ -21,7 +23,7 @@ export default function EditDialog({
   useEffect(() => {
     if (!open) return;
     setTitle(entry?.title ?? '');
-    setDate(entry?.date ?? '');
+    setDate(entry?.date ? (entry.date.slice(0,10)) : '');
     setSummary(entry?.summary ?? '');
     setMood(entry?.mood ?? '');
     setImg(entry?.img_name ?? '');
@@ -74,18 +76,15 @@ export default function EditDialog({
       const id = entry._id ?? entry.id;
       if (!id) throw new Error('No entry id provided');
 
-    
-      const res = await fetch("https://server-journal-1.onrender.com/api/journalEntries", { 
-       
-     // const res = await fetch(`${apiBase}/api/journalEntries/${id}`, { // change link to render server
+      const res = await fetch(`${base}/api/journalEntries/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
-      const text = await res.text();
+      const txt = await res.text();
       let parsed = null;
-      try { parsed = text ? JSON.parse(text) : null; } catch (_) { parsed = null; }
+      try { parsed = txt ? JSON.parse(txt) : null; } catch (e) { parsed = null; }
 
       if (res.ok) {
         const updated = parsed || { ...entry, ...payload, _id: id };
@@ -101,7 +100,7 @@ export default function EditDialog({
         setErrors(map);
         setStatus('Validation errors — please fix the fields.');
       } else {
-        const msg = (parsed && (parsed.message || parsed.error)) || text || `HTTP ${res.status}`;
+        const msg = (parsed && (parsed.message || parsed.error)) || txt || `HTTP ${res.status}`;
         setStatus(`Error: ${msg}`);
       }
     } catch (err) {
@@ -114,7 +113,7 @@ export default function EditDialog({
   if (!open) return null;
 
   return (
-    <div className="dialog-overlay" style={overlayStyle} role="dialog" aria-modal="true" aria-label="Edit entry dialog">
+    <div className="dialog-overlay" role="dialog" aria-modal="true" aria-label="Edit entry dialog" style={overlayStyle}>
       <div className="dialog" style={dialogStyle}>
         <h3>Edit Entry</h3>
         <form onSubmit={submit}>
@@ -168,3 +167,4 @@ const dialogStyle = {
   background: '#fff', padding: 16, borderRadius: 8, width: 'min(720px, 94%)', boxShadow: '0 6px 20px rgba(0,0,0,0.2)'
 };
 const errStyle = { color: 'crimson', marginTop: 4, fontSize: '0.9em' };
+//172

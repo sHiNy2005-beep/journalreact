@@ -8,6 +8,7 @@ export default function DeleteDialog({
   onDeleted,
   apiBase = '',
 }) {
+  const base = apiBase || process.env.REACT_APP_API_URL || 'https://server-journal-1.onrender.com';
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState('');
 
@@ -31,18 +32,19 @@ export default function DeleteDialog({
         return;
       }
 
-  
-      const res = await fetch("https://server-journal-1.onrender.com/api/journalEntries", { // added this line 
-     // const res = await fetch(`${apiBase}/api/journalEntries/${entryId}`, { // change link to render server
+      const res = await fetch(`${base}/api/journalEntries/${entryId}`, {
         method: 'DELETE',
       });
 
-      const text = await res.text();
+      const txt = await res.text();
+      let parsed = null;
+      try { parsed = txt ? JSON.parse(txt) : null; } catch (_) { parsed = null; }
+
       if (res.ok) {
         onDeleted && onDeleted(entryId);
         onClose && onClose();
       } else {
-        const msg = text || `HTTP ${res.status}`;
+        const msg = (parsed && (parsed.message || parsed.error)) || txt || `HTTP ${res.status}`;
         setStatus(`Delete failed: ${msg}`);
       }
     } catch (err) {
@@ -74,3 +76,4 @@ const overlayStyle = {
 const dialogStyle = {
   background: '#fff', padding: 16, borderRadius: 8, width: 'min(420px, 92%)', boxShadow: '0 6px 24px rgba(0,0,0,0.2)'
 };
+//77
