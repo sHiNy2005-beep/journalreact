@@ -191,18 +191,21 @@ export default function Journal() {
         {entries.length === 0 && !loading && <div className="info">No entries yet.</div>}
         {entries.map((e, idx) => {
 
-          // ==========================
-          //   IMAGE SOURCE LOGIC
-          // ==========================
+          
+          const PUBLIC_URL = process.env.PUBLIC_URL || ''; 
           let imgSrc = '';
           if (e.img_name) {
-            let name = e.img_name.replace(/^json\//i, '/');
+            let name = e.img_name.replace(/^json\//i, '/images/').replace(/^\/+/, '/');
+
             if (name.startsWith('uploads/')) {
               imgSrc = `${API_URL}/${name}`;
+            } else if (name.startsWith('http://') || name.startsWith('https://')) {
+              imgSrc = name;
             } else {
-              imgSrc = name; 
+              imgSrc = `${PUBLIC_URL}${name}`;
             }
           }
+
 
           return (
             <article className="entry" key={e._id ?? e.id ?? `${e.title}-${idx}`}>
