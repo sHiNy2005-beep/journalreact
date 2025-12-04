@@ -26,7 +26,7 @@ function validateEntry(entry, file) {
 }
 
 const AddDialog = ({ apiBase = '', addJournalEntry, closeDialog }) => {
-  const base = apiBase || process.env.REACT_APP_API_URL || 'https://server-journal-1.onrender.com';
+  const base = apiBase || process.env.REACT_APP_API_URL || 'https://server-journal-2.onrender.com';
   const [inputs, setInputs] = useState({ title: "", date: "", summary: "", mood: "", img_name: "" });
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");

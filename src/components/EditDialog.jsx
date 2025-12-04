@@ -7,7 +7,7 @@ export default function EditDialog({
   onSaved,
   apiBase = '',
 }) {
-  const base = apiBase || process.env.REACT_APP_API_URL || 'https://server-journal-1.onrender.com';
+  const base = apiBase || process.env.REACT_APP_API_URL || 'https://server-journal-2.onrender.com';
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
   const [summary, setSummary] = useState('');

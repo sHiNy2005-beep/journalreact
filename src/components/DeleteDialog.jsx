@@ -8,7 +8,7 @@ export default function DeleteDialog({
   onDeleted,
   apiBase = '',
 }) {
-  const base = apiBase || process.env.REACT_APP_API_URL || 'https://server-journal-1.onrender.com';
+  const base = apiBase || process.env.REACT_APP_API_URL || 'https://server-journal-2.onrender.com';
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState('');
 

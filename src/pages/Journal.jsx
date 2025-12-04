@@ -41,7 +41,7 @@ export default function Journal() {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  const API_URL = process.env.REACT_APP_API_URL || 'https://server-journal-1.onrender.com';
+  const API_URL = process.env.REACT_APP_API_URL || 'https://server-journal-2.onrender.com';
 
   const [editOpen, setEditOpen] = useState(false);
   const [editEntry, setEditEntry] = useState(null);
