@@ -1,8 +1,11 @@
+// src/Journal.jsx
 import React, { useEffect, useState } from 'react';
 import { embeddedJournal } from '../data/entriesData';
 import '../styles/journal.css';
 import EditDialog from '../components/EditDialog.jsx';
 import DeleteDialog from '../components/DeleteDialog.jsx';
+import AddDialog from '../components/AddDialog.jsx'; // if you have it
+import { fetchEntries, createEntry, normalizeImgUrl, API_BASE } from '../api';
 
 function parseToDate(dstr) {
   if (!dstr) return null;
@@ -41,7 +44,8 @@ export default function Journal() {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  const API_URL = process.env.REACT_APP_API_URL || 'https://server-journal-2.onrender.com';
+  // default API_URL is provided by api.js (API_BASE) but keep backward compatibility
+  const API_URL = process.env.REACT_APP_API_URL || API_BASE;
 
   const [editOpen, setEditOpen] = useState(false);
   const [editEntry, setEditEntry] = useState(null);
@@ -49,26 +53,23 @@ export default function Journal() {
   const [deleteEntryId, setDeleteEntryId] = useState(null);
 
   useEffect(() => {
-    const ac = new AbortController();
+    let mounted = true;
     const load = async () => {
       setLoading(true);
       setErrorMsg('');
       try {
-        const res = await fetch(`${API_URL}/api/journalEntries`, { signal: ac.signal });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        const arr = Array.isArray(data) ? data : (data.entries || []);
+        const arr = await fetchEntries();
         arr.sort((a, b) => timeValue(b.date) - timeValue(a.date));
-        if (arr.length) setEntriesState(arr);
+        if (mounted && arr.length) setEntriesState(arr);
       } catch (err) {
-        if (err.name !== 'AbortError') setErrorMsg('Could not load latest entries — showing embedded data.');
+        if (mounted) setErrorMsg('Could not load latest entries — showing embedded data.');
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
     load();
-    return () => ac.abort();
-  }, [API_URL]);
+    return () => { mounted = false; };
+  }, []);
 
   const handleChange = (e) => setNewEntry((p) => ({ ...p, [e.target.name]: e.target.value }));
 
@@ -115,25 +116,14 @@ export default function Journal() {
     setNewEntry({ title: '', date: '', summary: '', mood: '', img_name: '' });
     setShowForm(false);
     try {
-      const res = await fetch(`${API_URL}/api/journalEntries`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: optimisticEntry.title,
-          date: optimisticEntry.date,
-          summary: optimisticEntry.summary,
-          mood: optimisticEntry.mood,
-          img_name: safeImgValue(optimisticEntry.img_name)
-        })
+      // use createEntry which may accept JSON or FormData; here we send JSON (no file)
+      const saved = await createEntry({
+        title: optimisticEntry.title,
+        date: optimisticEntry.date,
+        summary: optimisticEntry.summary,
+        mood: optimisticEntry.mood,
+        img_name: safeImgValue(optimisticEntry.img_name)
       });
-      if (!res.ok) {
-        const txt = await res.text();
-        let parsed = null;
-        try { parsed = txt ? JSON.parse(txt) : null; } catch { parsed = null; }
-        const message = (parsed && (parsed.message || (parsed.details && parsed.details.map(d=>d.message).join('; ')))) || txt || `HTTP ${res.status}`;
-        throw new Error(message);
-      }
-      const saved = await res.json();
       setEntriesState((p) => {
         const filtered = p.filter((it) => it._id !== localTempId);
         return [saved, ...filtered].sort((a, b) => timeValue(b.date) - timeValue(a.date));
@@ -148,8 +138,8 @@ export default function Journal() {
     }
   };
 
-  function openEdit(entry) {
-    setEditEntry(entry);
+  function openEdit(entryToEdit) {
+    setEditEntry(entryToEdit);
     setEditOpen(true);
   }
 
@@ -190,13 +180,10 @@ export default function Journal() {
       <div className="journal-scroll-wrapper" aria-live="polite">
         {entries.length === 0 && !loading && <div className="info">No entries yet.</div>}
         {entries.map((e, idx) => {
-
-          
-          const PUBLIC_URL = process.env.PUBLIC_URL || ''; 
+          const PUBLIC_URL = process.env.PUBLIC_URL || '';
           let imgSrc = '';
           if (e.img_name) {
             let name = e.img_name.replace(/^json\//i, '/images/').replace(/^\/+/, '/');
-
             if (name.startsWith('uploads/')) {
               imgSrc = `${API_URL}/${name}`;
             } else if (name.startsWith('http://') || name.startsWith('https://')) {
@@ -204,8 +191,9 @@ export default function Journal() {
             } else {
               imgSrc = `${PUBLIC_URL}${name}`;
             }
+          } else if (e.img_url) {
+            imgSrc = e.img_url;
           }
-
 
           return (
             <article className="entry" key={e._id ?? e.id ?? `${e.title}-${idx}`}>

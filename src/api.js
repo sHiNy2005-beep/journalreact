@@ -1,5 +1,5 @@
 // src/api.js
-const BASE = (process.env.REACT_APP_API_URL || "http://localhost:3002").replace(/\/$/, '');
+const BASE = (process.env.REACT_APP_API_URL || "https://server-journal-2.onrender.com").replace(/\/$/, '');
 
 function buildUrl(path) {
   return `${BASE}${path.startsWith('/') ? '' : '/'}${path}`;
@@ -44,7 +44,10 @@ export async function updateEntry(id, payload) {
   });
   if (!res.ok) {
     const err = await res.json().catch(()=>({message: res.statusText || res.status}));
-    throw new Error(err.message || `Update failed ${res.status}`);
+    // include details if present for calling code
+    const e = new Error(err.message || `Update failed ${res.status}`);
+    if (err.details) e.details = err.details;
+    throw e;
   }
   const saved = await res.json();
   if (saved && saved.img_name) saved.img_url = normalizeImgUrl(saved.img_name);
@@ -55,7 +58,9 @@ export async function deleteEntry(id) {
   const res = await fetch(buildUrl(`/api/journalEntries/${id}`), { method: 'DELETE' });
   if (!res.ok) {
     const err = await res.json().catch(()=>({message: res.statusText || res.status}));
-    throw new Error(err.message || `Delete failed ${res.status}`);
+    const e = new Error(err.message || `Delete failed ${res.status}`);
+    if (err.details) e.details = err.details;
+    throw e;
   }
   return true;
 }

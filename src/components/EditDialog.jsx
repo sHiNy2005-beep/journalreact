@@ -1,4 +1,6 @@
+// src/components/EditDialog.jsx
 import React, { useEffect, useState, useRef } from 'react';
+import { updateEntry, normalizeImgUrl } from '../api';
 
 export default function EditDialog({
   open,
@@ -19,16 +21,43 @@ export default function EditDialog({
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState('');
   const firstRef = useRef(null);
+  const fileObjectUrlRef = useRef(null);
+
+  const normalizeDateForInput = (d) => {
+    if (!d) return '';
+    const dt = (d instanceof Date) ? d : new Date(d);
+    if (isNaN(dt.getTime())) return '';
+    return dt.toISOString().slice(0, 10);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (fileObjectUrlRef.current) {
+        URL.revokeObjectURL(fileObjectUrlRef.current);
+        fileObjectUrlRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!open) return;
     setTitle(entry?.title ?? '');
-    setDate(entry?.date ? entry.date.slice(0,10) : '');
+    setDate(normalizeDateForInput(entry?.date));
     setSummary(entry?.summary ?? '');
     setMood(entry?.mood ?? '');
     setImgName(entry?.img_name ?? '');
     setFile(null);
-    setPreview(entry?.img_name ? (entry.img_name.startsWith('uploads/') ? `${base}/${entry.img_name}` : entry.img_name) : '');
+
+    if (entry?.img_name) {
+      if (entry.img_name.startsWith('uploads/')) {
+        setPreview(`${base}/${entry.img_name}`);
+      } else {
+        setPreview(entry.img_name);
+      }
+    } else {
+      setPreview('');
+    }
+
     setErrors({});
     setStatus('');
     setTimeout(() => firstRef.current?.focus(), 10);
@@ -58,10 +87,25 @@ export default function EditDialog({
 
   const handleFileChange = (ev) => {
     const f = ev.target.files && ev.target.files[0];
+    if (fileObjectUrlRef.current) {
+      URL.revokeObjectURL(fileObjectUrlRef.current);
+      fileObjectUrlRef.current = null;
+    }
+
     setFile(f || null);
-    if (f) setPreview(URL.createObjectURL(f));
-    else setPreview(imgName || '');
-    if (f) setImgName('');
+
+    if (f) {
+      try {
+        const url = URL.createObjectURL(f);
+        fileObjectUrlRef.current = url;
+        setPreview(url);
+      } catch {
+        setPreview('');
+      }
+      setImgName('');
+    } else {
+      setPreview(imgName || (entry?.img_name ? (entry.img_name.startsWith('uploads/') ? `${base}/${entry.img_name}` : entry.img_name) : ''));
+    }
   };
 
   const submit = async (ev) => {
@@ -84,36 +128,31 @@ export default function EditDialog({
       form.append('summary', summary.trim());
       form.append('mood', mood.trim());
       if (file) form.append('img', file, file.name);
-      else form.append('img_name', imgName || '');
+      else form.append('img_name', imgName || (entry.img_name || ''));
 
-      const res = await fetch(`${base}/api/journalEntries/${id}`, {
-        method: 'PUT',
-        body: form,
-      });
+      const saved = await updateEntry(id, form);
 
-      const txt = await res.text();
-      let parsed = null;
-      try { parsed = txt ? JSON.parse(txt) : null; } catch (_) { parsed = null; }
+      if (saved && saved.img_name && !saved.img_url) {
+        saved.img_url = normalizeImgUrl(saved.img_name);
+      }
 
-      if (res.ok) {
-        const updated = parsed || { ...entry, title, date, summary, mood, img_name: file ? `uploads/${file.name}` : imgName, _id: id };
-        onSaved && onSaved(updated);
-        setStatus('Saved.');
-        onClose && onClose();
-      } else if (res.status === 400 && parsed && parsed.details) {
+      onSaved && onSaved(saved);
+      setStatus('Saved.');
+      onClose && onClose();
+    } catch (err) {
+      // if server returned joi details, update field errors
+      if (err && err.details && Array.isArray(err.details)) {
         const map = {};
-        parsed.details.forEach((d) => {
+        err.details.forEach((d) => {
           const key = (d.path && d.path.length ? d.path[d.path.length - 1] : (d.context && d.context.key)) || '_general';
           map[key] = d.message;
         });
         setErrors(map);
         setStatus('Validation errors — please fix the fields.');
       } else {
-        const msg = (parsed && (parsed.message || parsed.error)) || txt || `HTTP ${res.status}`;
-        setStatus(`Error: ${msg}`);
+        const msg = err?.message || String(err);
+        setStatus('Error: ' + msg);
       }
-    } catch (err) {
-      setStatus('Network error: ' + (err?.message || err));
     } finally {
       setSaving(false);
     }
@@ -162,7 +201,7 @@ export default function EditDialog({
             {errors.img && <div style={errStyle}>{errors.img}</div>}
           </p>
 
-          {preview && <p><img src={preview} alt="preview" style={{ maxWidth: 200 }} /></p>}
+          {preview && <p><img src={preview} alt="preview" style={{ maxWidth: 200 }} onError={(ev) => { ev.currentTarget.style.display = 'none'; }} /></p>}
 
           <p>
             <button type="submit" disabled={saving}>Save</button>{' '}

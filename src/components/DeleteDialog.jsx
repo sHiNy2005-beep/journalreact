@@ -1,12 +1,14 @@
+// src/components/DeleteDialog.jsx
 import React, { useState } from 'react';
+import { deleteEntry } from '../api';
 
 export default function DeleteDialog({
   open,
   onClose,
   entryId,
-  onDelete,
   onDeleted,
   apiBase = '',
+  onDelete, // optional callback override
 }) {
   const base = apiBase || process.env.REACT_APP_API_URL || 'https://server-journal-2.onrender.com';
   const [busy, setBusy] = useState(false);
@@ -29,26 +31,16 @@ export default function DeleteDialog({
 
       if (!entryId) {
         setStatus('No entry id provided.');
+        setBusy(false);
         return;
       }
 
-      const res = await fetch(`${base}/api/journalEntries/${entryId}`, {
-        method: 'DELETE',
-      });
-
-      const txt = await res.text();
-      let parsed = null;
-      try { parsed = txt ? JSON.parse(txt) : null; } catch (_) { parsed = null; }
-
-      if (res.ok) {
-        onDeleted && onDeleted(entryId);
-        onClose && onClose();
-      } else {
-        const msg = (parsed && (parsed.message || parsed.error)) || txt || `HTTP ${res.status}`;
-        setStatus(`Delete failed: ${msg}`);
-      }
+      await deleteEntry(entryId);
+      onDeleted && onDeleted(entryId);
+      onClose && onClose();
     } catch (err) {
-      setStatus('Network error: ' + (err?.message || err));
+      const msg = err?.message || String(err);
+      setStatus('Delete failed: ' + msg);
     } finally {
       setBusy(false);
     }
