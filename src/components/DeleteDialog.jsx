@@ -1,46 +1,26 @@
-// src/components/DeleteDialog.jsx
+// src/components/DeleteDialog.jsx (debug-friendly)
 import React, { useState } from 'react';
 import { deleteEntry } from '../api';
 
-export default function DeleteDialog({
-  open,
-  onClose,
-  entryId,
-  onDeleted,
-  apiBase = '',
-  onDelete, // optional callback override
-}) {
-  const base = apiBase || process.env.REACT_APP_API_URL || 'https://server-journal-2.onrender.com';
+export default function DeleteDialog({ open, onClose, entryId, onDeleted }) {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState('');
 
   if (!open) return null;
 
   const confirmDelete = async () => {
-    if (busy) return;
     setBusy(true);
     setStatus('');
-
     try {
-      if (typeof onDelete === 'function') {
-        await onDelete(entryId);
-        onDeleted && onDeleted(entryId);
-        onClose && onClose();
-        return;
-      }
-
-      if (!entryId) {
-        setStatus('No entry id provided.');
-        setBusy(false);
-        return;
-      }
-
+      if (!entryId) throw new Error('No entry id provided');
+      console.log('DELETE /api/journalEntries/', entryId);
       await deleteEntry(entryId);
+      console.log('Delete success for', entryId);
       onDeleted && onDeleted(entryId);
       onClose && onClose();
     } catch (err) {
-      const msg = err?.message || String(err);
-      setStatus('Delete failed: ' + msg);
+      console.error('Delete failed', err);
+      setStatus('Error: ' + (err.message || String(err)));
     } finally {
       setBusy(false);
     }
@@ -49,22 +29,17 @@ export default function DeleteDialog({
   return (
     <div style={overlayStyle}>
       <div style={dialogStyle}>
-        <h3>Delete entry?</h3>
-        <p>Are you sure you want to permanently delete this entry?</p>
-        <div style={{ marginTop: 12 }}>
-          <button onClick={confirmDelete} disabled={busy}>Yes, delete</button>{' '}
-          <button onClick={() => onClose && onClose()} disabled={busy}>Cancel</button>
+        <h3>Delete entry (debug)</h3>
+        <p>Are you sure you want to delete?</p>
+        <div>
+          <button onClick={confirmDelete} disabled={busy}>{busy ? 'Deleting...' : 'Yes, delete'}</button>{' '}
+          <button onClick={()=>onClose&&onClose()} disabled={busy}>Cancel</button>
         </div>
-        {status && <div style={{ color: 'crimson', marginTop: 8 }}>{status}</div>}
+        {status && <div style={{color:'crimson', marginTop:8}}>{status}</div>}
       </div>
     </div>
   );
 }
 
-const overlayStyle = {
-  position: 'fixed', left: 0, top: 0, right: 0, bottom: 0,
-  background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000
-};
-const dialogStyle = {
-  background: '#fff', padding: 16, borderRadius: 8, width: 'min(420px, 92%)', boxShadow: '0 6px 24px rgba(0,0,0,0.2)'
-};
+const overlayStyle={ position:'fixed', left:0,top:0,right:0,bottom:0, background:'rgba(0,0,0,0.4)', display:'flex',alignItems:'center',justifyContent:'center', zIndex:2000 };
+const dialogStyle={ background:'#fff', padding:16, borderRadius:8, width:'min(420px,92%)', boxShadow:'0 6px 20px rgba(0,0,0,0.2)' };

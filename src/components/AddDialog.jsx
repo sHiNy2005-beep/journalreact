@@ -1,14 +1,12 @@
-// src/components/AddDialog.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { createEntry, normalizeImgUrl } from '../api';
 
 export default function AddDialog({
   open,
   onClose,
-  onAdded,         // called with saved entry
-  apiBase = '',    // optional override (if provided, preview/uploads use this)
+  onAdded,         
+  apiBase = '',   
 }) {
-  // <-- FIXED fallback to your Render server
   const base = apiBase || process.env.REACT_APP_API_URL || 'https://server-journal-2.onrender.com';
 
   const [inputs, setInputs] = useState({ title: '', date: '', summary: '', mood: '', img_name: '' });
@@ -29,13 +27,11 @@ export default function AddDialog({
       setStatus('');
       setTimeout(() => firstRef.current?.focus(), 10);
     } else {
-      // cleanup preview URL if dialog closed
       if (fileObjectUrlRef.current) {
         URL.revokeObjectURL(fileObjectUrlRef.current);
         fileObjectUrlRef.current = null;
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const validate = (vals, f) => {
@@ -64,7 +60,6 @@ export default function AddDialog({
     const { name, value } = e.target;
     setInputs((p) => {
       const next = { ...p, [name]: value };
-      // if user sets img_name and it looks like an uploads/ path, show preview using base
       if (name === 'img_name' && !file) {
         const t = (value || '').trim();
         if (t.startsWith('uploads/')) {
@@ -79,7 +74,6 @@ export default function AddDialog({
 
   const handleFileChange = (ev) => {
     const f = ev.target.files && ev.target.files[0];
-    // revoke prior object url
     if (fileObjectUrlRef.current) {
       URL.revokeObjectURL(fileObjectUrlRef.current);
       fileObjectUrlRef.current = null;
@@ -93,9 +87,8 @@ export default function AddDialog({
       } catch {
         setPreviewUrl('');
       }
-      setInputs((p) => ({ ...p, img_name: '' })); // file takes precedence
+      setInputs((p) => ({ ...p, img_name: '' })); 
     } else {
-      // no file chosen: show inputs.img_name or empty
       const name = inputs.img_name || '';
       if (name.startsWith('uploads/')) setPreviewUrl(base ? `${base}/${name}` : name);
       else setPreviewUrl(name || '');
@@ -135,7 +128,6 @@ export default function AddDialog({
         payload.append('mood', inputs.mood || '');
         payload.append('img', file, file.name);
       } else {
-        // send JSON; createEntry supports both JSON and FormData
         payload = {
           title: inputs.title || '',
           date: inputs.date || '',
@@ -147,7 +139,6 @@ export default function AddDialog({
 
       const saved = await createEntry(payload);
 
-      // normalize for UI: ensure img_url exists (and uses base for uploads/)
       if (saved && saved.img_name && !saved.img_url) saved.img_url = normalizeImgUrl(saved.img_name);
 
       setStatus('Saved.');

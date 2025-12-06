@@ -4,7 +4,7 @@ import { embeddedJournal } from '../data/entriesData';
 import '../styles/journal.css';
 import EditDialog from '../components/EditDialog.jsx';
 import DeleteDialog from '../components/DeleteDialog.jsx';
-import AddDialog from '../components/AddDialog.jsx'; // if you have it
+import AddDialog from '../components/AddDialog.jsx';
 import { fetchEntries, createEntry, normalizeImgUrl, API_BASE } from '../api';
 
 function parseToDate(dstr) {
@@ -44,7 +44,6 @@ export default function Journal() {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // default API_URL is provided by api.js (API_BASE) but keep backward compatibility
   const API_URL = process.env.REACT_APP_API_URL || API_BASE;
 
   const [editOpen, setEditOpen] = useState(false);
@@ -116,7 +115,6 @@ export default function Journal() {
     setNewEntry({ title: '', date: '', summary: '', mood: '', img_name: '' });
     setShowForm(false);
     try {
-      // use createEntry which may accept JSON or FormData; here we send JSON (no file)
       const saved = await createEntry({
         title: optimisticEntry.title,
         date: optimisticEntry.date,
